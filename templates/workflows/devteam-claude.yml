@@ -1,0 +1,58 @@
+name: devteam on GitHub
+
+# OPTIONAL. Lets you drive the team from GitHub by writing "@devteam …" in an
+# issue or PR comment, e.g. "@devteam fix the review comments" or
+# "@devteam ship this issue". Runs Claude Code in Actions with this plugin.
+#
+# Needs one repo secret: ANTHROPIC_API_KEY, or CLAUDE_CODE_OAUTH_TOKEN
+# (from `claude setup-token`, uses your Claude subscription).
+# Install the Claude GitHub App (run /install-github-app in Claude Code) so the
+# agents' pushes trigger CI — pushes made with the plain GITHUB_TOKEN don't.
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  issues:
+    types: [opened, assigned]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write
+  actions: read
+
+jobs:
+  devteam:
+    if: |
+      contains(github.event.comment.body, '@devteam') ||
+      contains(github.event.issue.body, '@devteam')
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          trigger_phrase: "@devteam"
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Replace with the Git URL of the repo where you host this plugin.
+          plugin_marketplaces: |
+            https://github.com/YOUR-USER/devteam.git
+          plugins: |
+            devteam@devteam
+          claude_args: --model claude-opus-5-5
+          prompt: |
+            You are the devteam orchestrator. Load the devteam:orchestration-playbook
+            and devteam:github-pr-protocol skills and follow them.
+            Read the triggering comment. Map it to the right flow:
+            - "ship" / "build" on an issue  -> the /devteam:ship pipeline for that issue
+            - "review" on a PR               -> the /devteam:review flow
+            - "fix" on a PR                  -> the /devteam:fix flow
+            - anything else                  -> answer as the orchestrator, in a comment
+            Never merge. Stop at gate G2 and say what's waiting on a human.

@@ -1,0 +1,43 @@
+name: devteam labels
+
+# Keeps the devteam status labels honest when humans act on GitHub directly.
+
+on:
+  pull_request:
+    types: [closed, reopened, converted_to_draft]
+  pull_request_review:
+    types: [submitted]
+
+permissions:
+  pull-requests: write
+  issues: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      PR: ${{ github.event.pull_request.number }}
+    steps:
+      - name: Merged — clear the flow
+        if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged
+        run: |
+          for l in $(gh pr view "$PR" --repo "$REPO" --json labels -q '.labels[].name' | grep -E '^(devteam:|role:)' || true); do
+            gh pr edit "$PR" --repo "$REPO" --remove-label "$l"
+          done
+          # Move linked issues out of in-progress.
+          for n in $(gh pr view "$PR" --repo "$REPO" --json closingIssuesReferences -q '.closingIssuesReferences[].number'); do
+            gh issue edit "$n" --repo "$REPO" --remove-label "devteam:in-progress" >/dev/null 2>&1 || true
+          done
+
+      - name: Back to draft — mark in progress
+        if: github.event.action == 'converted_to_draft'
+        run: gh pr edit "$PR" --repo "$REPO" --add-label "devteam:in-progress" --remove-label "devteam:ready-to-merge" || true
+
+      - name: Human requested changes — flag for the team
+        if: github.event_name == 'pull_request_review' && github.event.review.state == 'changes_requested'
+        run: |
+          gh pr edit "$PR" --repo "$REPO" \
+            --add-label "devteam:changes-requested,role:developer" \
+            --remove-label "devteam:ready-to-merge" || true

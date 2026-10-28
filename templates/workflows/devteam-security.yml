@@ -1,0 +1,63 @@
+name: devteam security
+
+# Dependency review, secret scanning and CodeQL on every PR, plus a weekly scan.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 3 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  dependency-review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: on-failure
+    permissions:
+      contents: read
+      pull-requests: write
+
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: gitleaks
+        run: |
+          docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:latest \
+            dir /repo --redact --exit-code 1 --no-banner
+
+  codeql:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [javascript-typescript, python]
+    steps:
+      - uses: actions/checkout@v6
+      - name: Skip languages the repo doesn't use
+        id: has
+        run: |
+          case "${{ matrix.language }}" in
+            python) n=$(git ls-files '*.py' | wc -l) ;;
+            *)      n=$(git ls-files '*.ts' '*.tsx' '*.js' '*.jsx' '*.vue' | wc -l) ;;
+          esac
+          echo "present=$([ "$n" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+      - if: steps.has.outputs.present == 'true'
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-extended
+      - if: steps.has.outputs.present == 'true'
+        uses: github/codeql-action/analyze@v4

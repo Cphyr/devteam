@@ -1,0 +1,29 @@
+{
+  "base_branch": "main",
+  "protected_branches": ["main"],
+  "autonomy": "gated",
+  "max_review_rounds": 3,
+  "max_parallel_tasks": 3,
+  "allow_agent_merge": false,
+  "use_milestones": false,
+
+  "node_version": "lts/*",
+  "python_version": "3.12",
+  "install_cmd": "npm ci",
+  "dev_server_cmd": "npm run dev",
+  "app_url": "http://localhost:3000",
+  "build_cmd": "npm run build",
+  "test_cmd": "npm test",
+  "e2e_cmd": "npx playwright test",
+
+  "lint_cmd": "npm run lint",
+  "lint_fix_cmd": "npm run lint:fix",
+  "format_check_cmd": "npm run format:check",
+  "typecheck_cmd": "npm run typecheck",
+  "lint_file_cmd": "npx eslint --max-warnings=0 {file}",
+  "lint_extensions": [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".vue"],
+  "lint_on_edit": true,
+
+  "reviewers": ["lint-guardian", "code-reviewer", "security-reviewer"],
+  "qa": true
+}

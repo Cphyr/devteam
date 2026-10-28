@@ -1,0 +1,12 @@
+{
+  "name": "devteam",
+  "owner": { "name": "Cfir" },
+  "metadata": { "description": "DevTeam: an AI web-app team that works through GitHub issues and pull requests." },
+  "plugins": [
+    {
+      "name": "devteam",
+      "source": "./",
+      "description": "Opus 5.5 orchestrator + Sonnet 5.5 role agents that build web apps through GitHub pull requests."
+    }
+  ]
+}

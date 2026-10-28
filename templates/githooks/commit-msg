@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# devteam commit-msg hook: enforce Conventional Commits on the subject line.
+# Merge, revert and fixup commits are allowed through.
+set -euo pipefail
+
+msg_file="$1"
+subject=$(grep -v '^#' "$msg_file" | head -n1)
+
+if [[ "$subject" =~ ^(Merge|Revert|fixup!|squash!) ]]; then
+  exit 0
+fi
+
+re='^(feat|fix|test|refactor|style|docs|chore|ci|perf|build|revert)(\([a-z0-9._/-]+\))?!?: .{3,72}$'
+if ! [[ "$subject" =~ $re ]]; then
+  echo "commit-msg: subject must follow Conventional Commits, e.g. 'feat(auth): add password reset'" >&2
+  echo "            got: $subject" >&2
+  exit 1
+fi

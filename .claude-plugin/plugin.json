@@ -1,0 +1,9 @@
+{
+  "name": "devteam",
+  "displayName": "DevTeam",
+  "version": "0.2.0",
+  "description": "An AI web-app team that works on GitHub PRs: an Opus 5.5 orchestrator directs Sonnet 5.5 product, architect, test, developer, review, QA and release agents that commit, push, comment and resolve review threads themselves.",
+  "author": { "name": "Cfir" },
+  "license": "MIT",
+  "keywords": ["orchestrator", "multi-agent", "github", "pull-requests", "code-review", "qa", "web-app", "tdd"]
+}

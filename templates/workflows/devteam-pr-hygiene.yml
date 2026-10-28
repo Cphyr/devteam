@@ -1,0 +1,59 @@
+name: devteam PR hygiene
+
+# Conventional Commit PR titles, a linked issue, and a size label on every PR.
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  hygiene:
+    runs-on: ubuntu-latest
+    steps:
+      - name: PR title follows Conventional Commits
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          re='^(feat|fix|test|refactor|style|docs|chore|ci|perf|build|revert)(\([a-z0-9._/-]+\))?!?: .{3,}'
+          if ! [[ "$TITLE" =~ $re ]]; then
+            echo "::error::PR title must look like 'feat(scope): add thing' — got: $TITLE"
+            exit 1
+          fi
+
+      - name: PR links an issue
+        if: ${{ !startsWith(github.event.pull_request.head.ref, 'dependabot/') }}
+        env:
+          BODY: ${{ github.event.pull_request.body }}
+        run: |
+          if ! grep -Eiq '(close[sd]?|fix(e[sd])?|resolve[sd]?|refs?) #[0-9]+' <<<"$BODY"; then
+            echo "::error::PR body must link an issue (e.g. 'Closes #42')."
+            exit 1
+          fi
+
+      - name: Size label
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          ADDS: ${{ github.event.pull_request.additions }}
+          DELS: ${{ github.event.pull_request.deletions }}
+        run: |
+          total=$((ADDS + DELS))
+          if   [ "$total" -lt 50 ];  then size=XS
+          elif [ "$total" -lt 200 ]; then size=S
+          elif [ "$total" -lt 400 ]; then size=M
+          elif [ "$total" -lt 800 ]; then size=L
+          else size=XL; fi
+          for s in XS S M L XL; do
+            gh label create "size:$s" --repo "$REPO" --color ededed --force >/dev/null
+            [ "$s" != "$size" ] && gh pr edit "$PR" --repo "$REPO" --remove-label "size:$s" >/dev/null 2>&1 || true
+          done
+          gh pr edit "$PR" --repo "$REPO" --add-label "size:$size"
+          if [ "$size" = XL ]; then
+            echo "::warning::This PR changes $total lines. Consider splitting it."
+          fi

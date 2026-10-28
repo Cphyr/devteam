@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# Run a `gh` command as the devteam reviewer identity (GitHub App bot or
+# machine user), so reviews can APPROVE / REQUEST_CHANGES on PRs that you or
+# the developer agent opened.
+#
+#   gh-as-reviewer api repos/OWNER/REPO/pulls/12/reviews -X POST --input review.json
+#   gh-as-reviewer --check     # exit 0 if a reviewer identity is configured
+#
+# Exit code 3 means no reviewer identity is configured: post a COMMENT review
+# with your normal gh login instead.
+set -euo pipefail
+here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+token="$(python3 "$here/reviewer_token.py")" || exit $?
+
+if [[ "${1:-}" == "--check" ]]; then
+  echo "devteam reviewer identity: ok"
+  exit 0
+fi
+
+GH_TOKEN="$token" exec gh "$@"
