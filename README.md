@@ -1,6 +1,6 @@
 # DevTeam — an AI web-app team that works on GitHub
 
-DevTeam is a Claude Code plugin that runs a whole software team through your GitHub repository. A **Claude Opus 5.5 orchestrator** leads eleven roles, ten of them **Claude Sonnet 5.5** specialists. They open issues, write tests, push commits, open pull requests, leave inline review comments, reply to and resolve each other's threads, and hand work to each other in the PR timeline, so you can follow everything on GitHub like a real team. A human always does the final merge.
+DevTeam is a Claude Code plugin with two teams: a **planning team** that researches a new product idea and decides whether to build it, and a **build team** that builds it through your GitHub repository. A **Claude Opus 5.5 orchestrator** leads eleven roles, ten of them **Claude Sonnet 5.5** specialists. They open issues, write tests, push commits, open pull requests, leave inline review comments, reply to and resolve each other's threads, and hand work to each other in the PR timeline, so you can follow everything on GitHub like a real team. A human always does the final merge.
 
 ## The team
 
@@ -19,6 +19,33 @@ DevTeam is a Claude Code plugin that runs a whole software team through your Git
 | **release-manager** | Sonnet 5.5 | Final PR description, changelog, merge checklist, `ready-to-merge` label |
 
 No agent both writes code and judges it: tests are fixed targets for the developer, and reviewers can't edit code.
+
+## The planning team (new products)
+
+Before building something new, `/devteam:plan "<idea>"` decides **whether** to build it and **what** the first version is. A **Claude Opus 5.5 planner** leads seven Sonnet 5.5 specialists:
+
+| Role | Team | Delivers |
+|---|---|---|
+| **planner** (Opus 5.5) | Lead | Framing, decision criteria (written *before* research), concept, verdict, one-page brief |
+| **user-researcher** | Research | Personas, sourced pain quotes, workarounds, interview script |
+| **market-researcher** | Market research | TAM/SAM/SOM bottom-up with method, trends, "why now", willingness to pay, channels |
+| **solutions-analyst** | Existing solutions | Every competitor, open-source project and workaround; comparison table, gaps, graveyard, positioning map |
+| **feasibility-analyst** | Feasibility | Architecture sketch, hard parts, API/ToS/legal/privacy checks, effort and running cost |
+| **business-analyst** | Business model | Pricing, unit economics (computed in code), first 100 users, success and kill metrics |
+| **rejection-panel** | Rejecting team | Strongest honest case *against*: fatal risks, pre-mortem, kill criteria |
+| **approval-panel** | Approving team | Strongest honest case *for*: the wedge, the smallest proof, answers to objections |
+
+```
+idea ─► planner frames it + writes decision criteria
+     ─► research ∥ market ∥ existing solutions ∥ feasibility      (parallel, sourced)
+     ─► planner writes the concept ─► business-analyst
+     ─► rejection-panel ∥ approval-panel   (independent, same evidence)
+     ─► each rebuts the other
+     ─► planner scores 6 dimensions ─► GO / PIVOT / NO-GO + validation experiments
+     ─► decision issue + plan PR on GitHub ─► /devteam:ship --from-plan <slug>
+```
+
+Every claim is linked to a source or marked as an assumption or estimate. Outside a GitHub repo, the plan is saved to `./product-plans/<slug>/` instead. Use `--quick` for a lighter run.
 
 ## How a feature flows
 
@@ -58,7 +85,8 @@ Or, to try it from a local folder: `/plugin marketplace add /path/to/devteam`.
 |---|---|
 | `/devteam:setup` | One-time per repo: checks, labels, `.devteam/config.json`, strict linting, CI workflows, git hooks. Opens a setup PR. |
 | `/devteam:reviewer-setup` | One-time per machine: creates the reviewer bot so reviews are real Approve / Request changes. |
-| `/devteam:ship <idea>` or `/devteam:ship #42` | The full pipeline. `--resume <slug>` continues an interrupted run. |
+| `/devteam:plan "<idea>"` | The planning team: research, market, existing solutions, feasibility, business, rejecting vs approving panels → GO / PIVOT / NO-GO. `--quick` for a lighter run. |
+| `/devteam:ship <idea>` or `/devteam:ship #42` | The full build pipeline. `--from-plan <slug>` builds a GO plan's MVP; `--resume <slug>` continues an interrupted run. |
 | `/devteam:review <PR>` | Runs the review panel on any PR, including ones you wrote. Add `--qa` for a browser test. |
 | `/devteam:fix <PR>` | The developer works through every open thread (yours first), then reviewers re-check. |
 | `/devteam:status` | The board: what's waiting on you, in review, in progress, backlog. |

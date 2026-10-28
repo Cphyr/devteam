@@ -30,7 +30,7 @@ Every comment, review body and issue body starts with a role header and ends wit
 <!-- devteam role=<role> kind=<kind> verdict=<VERDICT> round=<n> -->
 ```
 
-- `<role>`: orchestrator, product-manager, issue-manager, architect, lint-guardian, test-engineer, developer, code-reviewer, security-reviewer, qa-tester, release-manager.
+- `<role>`: planner, user-researcher, market-researcher, solutions-analyst, feasibility-analyst, business-analyst, rejection-panel, approval-panel, orchestrator, product-manager, issue-manager, architect, lint-guardian, test-engineer, developer, code-reviewer, security-reviewer, qa-tester, release-manager.
 - `<kind>`: spec, plan, handoff, review, lint, qa, fix-summary, release, question, status.
 - `<VERDICT>`: `PASS`, `CHANGES_REQUESTED`, `BLOCKED` or `NA`.
 
@@ -80,7 +80,7 @@ If `--check` exits 3, fall back to the author identity with `"event": "COMMENT"`
 | `devteam:ready-to-merge` | Every gate passed, a human can merge |
 | `devteam:needs-human` | Blocked on a human decision |
 | `role:<role>` | Which role owns the next step |
-| `type:feature`, `type:bug`, `type:chore`, `type:follow-up` | Issue type |
+| `type:feature`, `type:bug`, `type:chore`, `type:follow-up`, `type:decision` | Issue type (`decision` = a planning-team GO / PIVOT / NO-GO) |
 | `prio:p0` … `prio:p3` | Priority |
 
 Swap a status label:
